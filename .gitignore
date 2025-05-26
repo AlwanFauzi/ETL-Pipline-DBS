@@ -1,0 +1,12 @@
+# Ignore virtualenv
+venv/
+__pycache__/
+
+# Ignore credentials
+google-sheets-api.json
+
+# Ignore test coverage
+.coverage
+
+# Output files
+products.csv
