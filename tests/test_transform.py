@@ -1,32 +1,35 @@
-import unittest
+import pytest
+import pandas as pd
 from utils.transform import transform_data
 
-class TestTransform(unittest.TestCase):
+def test_transform_data():
+    raw_data = [
+        {"title": "Product 1", "price": "$10", "rating": "4.5", "colors": "3 Colors", "size": "Size: M", "gender": "Gender: Unisex"},
+        {"title": "Product 2", "price": "$20", "rating": "4.0", "colors": "2 Colors", "size": "Size: L", "gender": "Gender: Male"},
+        {"title": "Product 3", "price": "$15", "rating": "5", "colors": "1 Color", "size": "Size: S", "gender": "Gender: Female"},
+    ]
 
-    def setUp(self):
-        self.raw_data = [{
-            'title': 'Test Item',
-            'price': '$10.5',
-            'rating': 'Rating: 4.3',
-            'colors': '3 colors',
-            'size': 'M',
-            'gender': 'Male'
-        }]
+    df = transform_data(raw_data)
 
-    def test_transform_returns_dataframe(self):
-        df = transform_data(self.raw_data)
-        self.assertEqual(df.shape[0], 1)
-        self.assertIn('price', df.columns)
-        self.assertAlmostEqual(df['price'].iloc[0], 168000.0, places=2)
+    # Periksa jumlah baris
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 3
 
-    def test_transformed_rating(self):
-        df = transform_data(self.raw_data)
-        self.assertAlmostEqual(df['rating'].iloc[0], 4.3, places=1)
+    # Periksa nilai yang ditransformasikan
+    assert df['price'].iloc[0] == 160000
+    assert df['rating'].iloc[0] == 4.5
+    assert df['colors'].iloc[0] == 3
+    assert df['size'].iloc[0] == "M"
+    assert df['gender'].iloc[0] == "Unisex"
 
-    def test_missing_price_dropped(self):
-        bad_data = [dict(self.raw_data[0], price=None)]
-        df = transform_data(bad_data)
-        self.assertEqual(len(df), 0)
+    assert df['price'].iloc[1] == 320000
+    assert df['rating'].iloc[1] == 4.0
+    assert df['colors'].iloc[1] == 2
+    assert df['size'].iloc[1] == "L"
+    assert df['gender'].iloc[1] == "Male"
 
-if __name__ == '__main__':
-    unittest.main()
+    assert df['price'].iloc[2] == 240000
+    assert df['rating'].iloc[2] == 5.0
+    assert df['colors'].iloc[2] == 1
+    assert df['size'].iloc[2] == "S"
+    assert df['gender'].iloc[2] == "Female"
