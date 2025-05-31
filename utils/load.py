@@ -1,32 +1,49 @@
 import pandas as pd
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+import os
 
 def save_to_csv(df, filename='products.csv'):
-    df.to_csv(filename, index=False)
-    print(f"[INFO] Saved to {filename}")
+    try:
+        df.to_csv(filename, index=False)
+        print(f"[INFO] Saved to {filename}")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to save CSV: {e}")
+        return False
 
-def save_to_gsheet(df, spreadsheet_id, sheet_range):
-    creds = Credentials.from_service_account_file('google-sheets-api.json')
-    service = build('sheets', 'v4', credentials=creds)
-    sheet = service.spreadsheets()
+def get_gsheet_service(credential_path='google-sheets-api.json'):
+    if not os.path.exists(credential_path):
+        raise FileNotFoundError(f"Credential file '{credential_path}' not found.")
+    creds = Credentials.from_service_account_file(credential_path)
+    return build('sheets', 'v4', credentials=creds)
 
-    data = [df.columns.tolist()] + df.values.tolist()
-    sheet_name = sheet_range.split('!')[0]
+def save_to_gsheet(df, spreadsheet_id, sheet_range, credential_path='google-sheets-api.json'):
+    try:
+        service = get_gsheet_service(credential_path)
+        sheet = service.spreadsheets()
 
-    # Clear existing content
-    sheet.values().clear(
-        spreadsheetId=spreadsheet_id,
-        range=sheet_name
-    ).execute()
+        data = [df.columns.tolist()] + df.values.tolist()
+        sheet_name = sheet_range.split('!')[0]
 
-    # Update with new data
-    body = {'values': data}
-    result = sheet.values().update(
-        spreadsheetId=spreadsheet_id,
-        range=sheet_range,
-        valueInputOption='RAW',
-        body=body
-    ).execute()
+        # Clear existing content
+        sheet.values().clear(
+            spreadsheetId=spreadsheet_id,
+            range=sheet_name
+        ).execute()
 
-    print(f"[INFO] {result.get('updatedCells')} cells updated in Google Sheets.")
+        # Update with new data
+        body = {'values': data}
+        result = sheet.values().update(
+            spreadsheetId=spreadsheet_id,
+            range=sheet_range,
+            valueInputOption='RAW',
+            body=body
+        ).execute()
+
+        updated = result.get('updatedCells')
+        print(f"[INFO] {updated} cells updated in Google Sheets.")
+        return updated
+    except Exception as e:
+        print(f"[ERROR] Failed to save to Google Sheets: {e}")
+        return None

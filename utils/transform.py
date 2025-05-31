@@ -28,8 +28,8 @@ def transform_data(data):
     df['colors'] = pd.to_numeric(df['colors'], errors='coerce')
 
     # --- Bersihkan kolom size & gender ---
-    df['size'] = df['size'].astype(str).str.replace('Size:', '', regex=False).str.strip()
-    df['gender'] = df['gender'].astype(str).str.replace('Gender:', '', regex=False).str.strip()
+    df['size'] = df['size'].apply(lambda x: str(x).replace('Size:', '').strip() if pd.notna(x) else x)
+    df['gender'] = df['gender'].apply(lambda x: str(x).replace('Gender:', '').strip() if pd.notna(x) else x)
 
     # --- Hapus baris dummy produk jika ada ---
     condition = (

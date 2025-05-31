@@ -1,63 +1,29 @@
-import requests
-from bs4 import BeautifulSoup
-import time
+import pytest
+from utils import extract
 
-BASE_URL = "https://fashion-studio.dicoding.dev"
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-}
+def test_get_html():
+    html = extract.get_html(1)
+    assert html is not None
+    assert "<html" in html.lower()
 
-def get_html(page_number):
-    """Mengambil HTML dari halaman tertentu."""
-    url = f"{BASE_URL}/?page={page_number}"
-    try:
-        response = requests.get(url, headers=HEADERS, timeout=10)
-        response.raise_for_status()
-        return response.text
-    except requests.exceptions.RequestException as e:
-        print(f"[!] Gagal mengambil halaman {page_number}: {e}")
-        return None
-
-def parse_product(card):
-    """Mengurai informasi produk dari elemen HTML kartu produk."""
-    def get_text(element, default=''):
-        return element.text.strip() if element else default
-
-    title = get_text(card.find('h3', class_='product-title'))
-    price = get_text(card.find('span', class_='price'))
-
-    p_tags = card.find_all('p')
-    rating = get_text(p_tags[0]).replace('Rating:', '') if len(p_tags) > 0 else ''
-    colors = get_text(p_tags[1]) if len(p_tags) > 1 else ''
-    size = get_text(p_tags[2]).replace('Size:', '') if len(p_tags) > 2 else ''
-    gender = get_text(p_tags[3]).replace('Gender:', '') if len(p_tags) > 3 else ''
-
-    return {
-        "title": title,
-        "price": price,
-        "rating": rating,
-        "colors": colors,
-        "size": size,
-        "gender": gender
-    }
-
-def extract_data():
-    """Menjalankan proses ekstraksi data dari semua halaman."""
-    all_products = []
-
-    for page in range(1, 51):
-        print(f"🔍 Mengambil halaman {page}...")
-        html = get_html(page)
-        if not html:
-            continue
-
-        soup = BeautifulSoup(html, 'html.parser')
-        cards = soup.find_all('div', class_='collection-card')
-
-        for card in cards:
-            product_info = parse_product(card)
-            all_products.append(product_info)
-
-        time.sleep(1)
-
-    return all_products
+def test_parse_product_structure():
+    sample_html = """
+    <div class="collection-card">
+        <h3 class="product-title">Test Product</h3>
+        <span class="price">$100</span>
+        <p>Rating: 4.5</p>
+        <p>3 colors available</p>
+        <p>Size: L</p>
+        <p>Gender: Unisex</p>
+    </div>
+    """
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(sample_html, 'html.parser')
+    product = extract.parse_product(soup)
+    
+    assert product['title'] == "Test Product"
+    assert product['price'] == "$100"
+    assert product['rating'] == "4.5"
+    assert product['colors'] == "3 colors available"
+    assert product['size'] == "L"
+    assert product['gender'] == "Unisex"

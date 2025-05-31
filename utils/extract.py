@@ -8,8 +8,12 @@ HEADERS = {
 }
 
 def get_html(page_number):
-    """Mengambil HTML dari halaman tertentu."""
-    url = f"{BASE_URL}/?page={page_number}"
+    """Mengambil HTML dari halaman tertentu dengan format URL yang sesuai."""
+    if page_number == 1:
+        url = f"{BASE_URL}/"
+    else:
+        url = f"{BASE_URL}/page{page_number}"
+
     try:
         response = requests.get(url, headers=HEADERS, timeout=10)
         response.raise_for_status()
@@ -27,10 +31,10 @@ def parse_product(card):
     price = get_text(card.find('span', class_='price'))
 
     p_tags = card.find_all('p')
-    rating = get_text(p_tags[0]).replace('Rating:', '') if len(p_tags) > 0 else ''
-    colors = get_text(p_tags[1]) if len(p_tags) > 1 else ''
-    size = get_text(p_tags[2]).replace('Size:', '') if len(p_tags) > 2 else ''
-    gender = get_text(p_tags[3]).replace('Gender:', '') if len(p_tags) > 3 else ''
+    rating = get_text(p_tags[0]).replace('Rating:', '').strip() if len(p_tags) > 0 else ''
+    colors = get_text(p_tags[1]).strip() if len(p_tags) > 1 else ''
+    size = get_text(p_tags[2]).replace('Size:', '').strip() if len(p_tags) > 2 else ''
+    gender = get_text(p_tags[3]).replace('Gender:', '').strip() if len(p_tags) > 3 else ''
 
     return {
         "title": title,
